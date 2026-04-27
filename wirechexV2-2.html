@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WireChex • Grid Routing v2.2 — Variable Ports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .marine-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
+        .diagram-container { background: #f8fafc; border: 3px solid #334155; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .port-circle { transition: all 0.1s ease; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+    <!-- Header -->
+    <div class="marine-header border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-11 h-11 bg-white rounded-3xl flex items-center justify-center shadow-inner">
+                    <span class="text-slate-950 text-4xl">⚡</span>
+                </div>
+                <div>
+                    <h1 class="font-display text-3xl font-semibold tracking-tighter">WireChex <span class="text-emerald-400 text-xl align-super">v2.2</span></h1>
+                    <p class="text-slate-400 text-sm -mt-1">Variable Ports • Smart Bumps • Topmost Track</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-x-3">
+                <button onclick="window.loadDemo()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-3xl flex items-center gap-x-2 transition-all active:scale-95">
+                    <span>Load Marine Demo</span>
+                </button>
+                <button onclick="resetAll()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-3xl">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- TOP CONTROLS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            
+            <!-- Add Device -->
+            <div>
+                <div class="bg-slate-900 rounded-3xl p-6 border border-slate-700">
+                    <h2 class="font-semibold text-xl mb-4 flex items-center gap-x-2">📍 Add Device</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="device-name" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3.5 text-sm" placeholder="GPSMAP 8616" value="GPSMAP 8616">
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1.5">LOCATION</label>
+                                <input type="text" id="device-location" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3.5 text-sm" placeholder="*Behind Helm" value="*Behind Helm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1.5">PORTS (1-5)</label>
+                                <select id="device-ports" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3.5 text-sm">
+                                    <option value="2">2 ports (GHC / 743 style)</option>
+                                    <option value="3">3 ports (943 style)</option>
+                                    <option value="4" selected>4 ports (8616 / GMR / 8612)</option>
+                                    <option value="5">5 ports (custom / future)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="addDevice()" class="w-full bg-white hover:bg-slate-100 transition-all active:scale-[0.985] text-slate-950 font-semibold py-3.5 rounded-3xl text-sm">+ Add Device</button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="flex items-center justify-between px-1 mb-3">
+                        <h3 class="font-medium text-sm text-slate-400">DEVICES <span id="device-count" class="font-mono text-xs">(0)</span></h3>
+                    </div>
+                    <div id="devices-list" class="space-y-2 max-h-[280px] overflow-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- Add Connection -->
+            <div>
+                <div class="bg-slate-900 rounded-3xl p-6 border border-slate-700">
+                    <h2 class="font-semibold text-xl mb-4 flex items-center gap-x-2">🔗 Add Connection</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">FROM DEVICE + PORT</label>
+                            <select id="conn-from" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">TO DEVICE + PORT</label>
+                            <select id="conn-to" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm"></select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">CABLE TYPE</label>
+                            <select id="conn-type" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm">
+                                <option value="NMEA2000">NMEA2000 (Black)</option>
+                                <option value="Network">Network (Blue)</option>
+                                <option value="Ethernet">Ethernet (Green)</option>
+                                <option value="Power12V">12V Power (Red)</option>
+                                <option value="Transducer">Transducer (Orange)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">LABEL</label>
+                            <input type="text" id="conn-label" class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm" placeholder="Main backbone">
+                        </div>
+                    </div>
+                    
+                    <button onclick="addConnection()" class="mt-5 w-full bg-emerald-600 hover:bg-emerald-500 transition-all active:scale-[0.985] text-white font-semibold py-3.5 rounded-3xl">Connect (Smart Routing)</button>
+                    
+                    <div id="validation-error" class="hidden mt-3 text-xs text-red-400 bg-red-950 border border-red-900 px-3 py-2 rounded-2xl"></div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="flex items-center justify-between px-1 mb-3">
+                        <h3 class="font-medium text-sm text-slate-400">CONNECTIONS <span id="connection-count" class="font-mono text-xs">(0)</span></h3>
+                        <span onclick="clearAllConnections()" class="text-[10px] text-red-400 hover:text-red-500 cursor-pointer">Clear all</span>
+                    </div>
+                    <div id="connections-list" class="space-y-2 max-h-[220px] overflow-auto pr-1 text-sm"></div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- FULL WIDTH DIAGRAM -->
+        <div class="mb-4 flex items-center justify-between px-1">
+            <div>
+                <h2 class="font-semibold text-2xl">Live Diagram</h2>
+                <p class="text-xs text-slate-500">Variable ports • Topmost track + rectangular bumps • 10px grid</p>
+            </div>
+            <div class="flex items-center gap-x-3">
+                <button onclick="generateDiagram()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-3xl flex items-center gap-x-2 transition-all active:scale-95">
+                    <span>Regenerate</span>
+                </button>
+                <button onclick="downloadSVG()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-3xl">Download SVG</button>
+            </div>
+        </div>
+        
+        <div id="diagram-preview" class="diagram-container rounded-3xl p-4 w-full min-h-[620px] border border-slate-700 overflow-hidden flex items-center justify-center">
+            <div class="text-center text-slate-500">
+                <div class="text-7xl mb-4 opacity-30">🛥️</div>
+                <p class="text-sm">Add devices with variable ports<br>then click <span class="font-semibold text-blue-400">Regenerate</span></p>
+            </div>
+        </div>
+        
+        <div class="mt-3 text-center text-[10px] text-slate-500">v2.2 • Dynamic port count (1-5) • Box width auto-calculates • Full bump support</div>
+        
+    </div>
+
+    <script>
+        let devices = [];
+        let connections = [];
+        let usedPorts = new Map();
+        
+        function updateCounts() {
+            document.getElementById('device-count').innerHTML = `(${devices.length})`;
+            document.getElementById('connection-count').innerHTML = `(${connections.length})`;
+        }
+        
+        function addDevice() {
+            const name = document.getElementById('device-name').value.trim();
+            if (!name) return alert("Enter a device name");
+            
+            const portCount = parseInt(document.getElementById('device-ports').value);
+            const id = Date.now();
+            
+            devices.push({
+                id: id,
+                name: name,
+                location: document.getElementById('device-location').value.trim() || "*Location",
+                portCount: portCount
+            });
+            usedPorts.set(id, new Set());
+            
+            renderDevices();
+            updateDeviceSelects();
+            updateCounts();
+            document.getElementById('device-name').value = '';
+            generateDiagram();
+        }
+        
+        function renderDevices() {
+            const container = document.getElementById('devices-list');
+            container.innerHTML = '';
+            devices.forEach(device => {
+                const used = usedPorts.get(device.id) || new Set();
+                const div = document.createElement('div');
+                div.className = `bg-slate-800 border border-slate-700 rounded-2xl p-3 flex justify-between items-center text-sm`;
+                div.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="font-semibold truncate">${device.name}</div>
+                        <div class="text-xs text-slate-400 truncate">${device.location} • ${device.portCount} ports (${used.size} used)</div>
+                    </div>
+                    <button onclick="deleteDevice(${device.id})" class="text-red-400 hover:text-red-500 text-2xl px-2 leading-none">×</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function deleteDevice(id) {
+            if (confirm("Remove this device and all its connections?")) {
+                devices = devices.filter(d => d.id !== id);
+                connections = connections.filter(c => c.fromId !== id && c.toId !== id);
+                usedPorts.delete(id);
+                renderDevices();
+                renderConnections();
+                updateDeviceSelects();
+                updateCounts();
+                generateDiagram();
+            }
+        }
+        
+        function updateDeviceSelects() {
+            const fromSel = document.getElementById('conn-from');
+            const toSel = document.getElementById('conn-to');
+            fromSel.innerHTML = toSel.innerHTML = '<option value="">Select device + port...</option>';
+            
+            devices.forEach(d => {
+                const used = usedPorts.get(d.id) || new Set();
+                for (let port = 1; port <= d.portCount; port++) {
+                    const isUsed = used.has(port);
+                    const label = `${d.name} (Port ${port})${isUsed ? ' ⚠️ used' : ''}`;
+                    
+                    const opt1 = document.createElement('option');
+                    opt1.value = `${d.id}-${port}`;
+                    opt1.textContent = label;
+                    if (isUsed) opt1.disabled = true;
+                    fromSel.appendChild(opt1);
+                    
+                    const opt2 = document.createElement('option');
+                    opt2.value = `${d.id}-${port}`;
+                    opt2.textContent = label;
+                    if (isUsed) opt2.disabled = true;
+                    toSel.appendChild(opt2);
+                }
+            });
+        }
+        
+        function addConnection() {
+            const errorDiv = document.getElementById('validation-error');
+            errorDiv.classList.add('hidden');
+            
+            const fromVal = document.getElementById('conn-from').value;
+            const toVal = document.getElementById('conn-to').value;
+            const type = document.getElementById('conn-type').value;
+            const label = document.getElementById('conn-label').value.trim();
+            
+            if (!fromVal || !toVal) {
+                showError("Please select both FROM and TO device + port");
+                return;
+            }
+            
+            const [fromId, fromPort] = fromVal.split('-').map(Number);
+            const [toId, toPort] = toVal.split('-').map(Number);
+            
+            if (fromId === toId) {
+                showError("Cannot connect a device to itself");
+                return;
+            }
+            
+            const fromDev = devices.find(d => d.id === fromId);
+            const toDev = devices.find(d => d.id === toId);
+            
+            if (!fromDev || !toDev) {
+                showError("Device not found");
+                return;
+            }
+            
+            if (fromPort > fromDev.portCount || toPort > toDev.portCount) {
+                showError("Selected port does not exist on this device");
+                return;
+            }
+            
+            const fromUsed = usedPorts.get(fromId) || new Set();
+            const toUsed = usedPorts.get(toId) || new Set();
+            
+            if (fromUsed.has(fromPort)) {
+                const existing = connections.find(c => c.fromId === fromId && c.fromPort === fromPort);
+                showError(`Port ${fromPort} on ${fromDev.name} is already used by ${existing ? existing.label : 'another connection'}. Remove it first.`);
+                return;
+            }
+            
+            if (toUsed.has(toPort)) {
+                const existing = connections.find(c => c.toId === toId && c.toPort === toPort);
+                showError(`Port ${toPort} on ${toDev.name} is already used by ${existing ? existing.label : 'another connection'}. Remove it first.`);
+                return;
+            }
+            
+            const connId = Date.now();
+            connections.push({
+                id: connId,
+                fromId, fromPort,
+                toId, toPort,
+                fromName: fromDev.name,
+                toName: toDev.name,
+                cableType: type,
+                label: label || type,
+                track: null,
+                bumps: []
+            });
+            
+            fromUsed.add(fromPort);
+            toUsed.add(toPort);
+            usedPorts.set(fromId, fromUsed);
+            usedPorts.set(toId, toUsed);
+            
+            renderConnections();
+            updateCounts();
+            updateDeviceSelects();
+            generateDiagram();
+            
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3 rounded-3xl text-sm shadow-xl flex items-center gap-x-2';
+            toast.innerHTML = `✅ Connected ${fromDev.name} P${fromPort} → ${toDev.name} P${toPort}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2200);
+        }
+        
+        function showError(msg) {
+            const errorDiv = document.getElementById('validation-error');
+            errorDiv.innerHTML = `⚠️ ${msg}`;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 4500);
+        }
+        
+        function renderConnections() {
+            const container = document.getElementById('connections-list');
+            container.innerHTML = '';
+            
+            connections.forEach(conn => {
+                const div = document.createElement('div');
+                div.className = `bg-slate-800 border border-slate-700 rounded-2xl px-3 py-2.5 flex justify-between items-center text-sm group`;
+                const text = `${conn.fromName} (P${conn.fromPort}) → ${conn.toName} (P${conn.toPort})`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="font-medium truncate">${text}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">${conn.cableType}</span>
+                    </div>
+                    <button onclick="deleteConnection(${conn.id})" class="text-red-400 hover:text-red-500 text-xl flex-shrink-0 px-1 opacity-70 group-hover:opacity-100">×</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function deleteConnection(id) {
+            const conn = connections.find(c => c.id === id);
+            if (!conn) return;
+            
+            const fromUsed = usedPorts.get(conn.fromId);
+            const toUsed = usedPorts.get(conn.toId);
+            if (fromUsed) fromUsed.delete(conn.fromPort);
+            if (toUsed) toUsed.delete(conn.toPort);
+            
+            connections = connections.filter(c => c.id !== id);
+            renderConnections();
+            updateCounts();
+            updateDeviceSelects();
+            generateDiagram();
+        }
+        
+        function clearAllConnections() {
+            if (confirm("Clear ALL connections?")) {
+                connections = [];
+                usedPorts.forEach(set => set.clear());
+                renderConnections();
+                updateCounts();
+                updateDeviceSelects();
+                generateDiagram();
+            }
+        }
+        
+        function findBestTrack(fromX, toX, existingHorizontals, trackYs) {
+            const minX = Math.min(fromX, toX);
+            const maxX = Math.max(fromX, toX);
+            
+            for (let t = 0; t < trackYs.length; t++) {
+                const y = trackYs[t];
+                let free = true;
+                for (const h of existingHorizontals) {
+                    if (h.y === y && !(h.maxX < minX || h.minX > maxX)) {
+                        free = false; break;
+                    }
+                }
+                if (free) return t;
+            }
+            return trackYs.length - 1;
+        }
+        
+        function buildBumpedPath(fromX, fromY, toX, toY, trackY, allHorizontals) {
+            let d = `M ${fromX} ${fromY}`;
+            
+            function getCrossings(x, y1, y2) {
+                const crossings = [];
+                for (const h of allHorizontals) {
+                    if (h.y > Math.min(y1, y2) && h.y < Math.max(y1, y2) && x >= h.minX && x <= h.maxX) {
+                        crossings.push({ y: h.y });
+                    }
+                }
+                crossings.sort((a, b) => a.y - b.y);
+                return crossings;
+            }
+            
+            const upCrossings = getCrossings(fromX, fromY, trackY);
+            for (const cross of upCrossings) {
+                const yCross = cross.y;
+                d += ` V ${yCross - 5} H ${fromX + 5} V ${yCross + 5} H ${fromX}`;
+            }
+            d += ` V ${trackY}`;
+            
+            d += ` H ${toX}`;
+            
+            const downCrossings = getCrossings(toX, trackY, toY);
+            for (const cross of downCrossings) {
+                const yCross = cross.y;
+                d += ` V ${yCross - 5} H ${toX + 5} V ${yCross + 5} H ${toX}`;
+            }
+            d += ` V ${toY}`;
+            
+            return d;
+        }
+        
+        function generateDiagram() {
+            const preview = document.getElementById('diagram-preview');
+            preview.innerHTML = '';
+            
+            if (devices.length === 0) {
+                preview.innerHTML = `<div class="text-center p-8 text-slate-400">Add devices first</div>`;
+                return;
+            }
+            
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "620");
+            svg.setAttribute("viewBox", "0 0 1180 620");
+            svg.style.background = "#f8fafc";
+            
+            const marginY = 48;
+            const portSpacing = 20;
+            const trackYs = [155, 178, 201, 224, 247, 270, 293, 316];
+            
+            const totalWidth = 980;
+            let currentX = 70;
+            const positions = {};
+            
+            devices.forEach((dev) => {
+                const boxW = Math.max(90, dev.portCount * 22 + 28);
+                positions[dev.id] = { x: currentX, y: marginY, w: boxW, h: 52, portCount: dev.portCount };
+                currentX += boxW + 35;
+            });
+            
+            devices.forEach(dev => {
+                const pos = positions[dev.id];
+                const { x, y, w, h } = pos;
+                
+                const shadow = document.createElementNS(svgNS, "rect");
+                shadow.setAttribute("x", x + 4); shadow.setAttribute("y", y + 4);
+                shadow.setAttribute("width", w); shadow.setAttribute("height", h);
+                shadow.setAttribute("rx", "10"); shadow.setAttribute("fill", "#94a3b8");
+                svg.appendChild(shadow);
+                
+                const rect = document.createElementNS(svgNS, "rect");
+                rect.setAttribute("x", x); rect.setAttribute("y", y);
+                rect.setAttribute("width", w); rect.setAttribute("height", h);
+                rect.setAttribute("rx", "10"); rect.setAttribute("fill", "#e0e7ff");
+                rect.setAttribute("stroke", "#6366f1"); rect.setAttribute("stroke-width", "2.5");
+                svg.appendChild(rect);
+                
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", x + w/2); text.setAttribute("y", y + 19);
+                text.setAttribute("text-anchor", "middle"); text.setAttribute("fill", "#1e2937");
+                text.setAttribute("font-size", "9.5"); text.setAttribute("font-weight", "700");
+                text.textContent = dev.name.length > 13 ? dev.name.substring(0, 11) + ".." : dev.name;
+                svg.appendChild(text);
+                
+                const loc = document.createElementNS(svgNS, "text");
+                loc.setAttribute("x", x + w/2); loc.setAttribute("y", y + 33);
+                loc.setAttribute("text-anchor", "middle"); loc.setAttribute("fill", "#64748b");
+                loc.setAttribute("font-size", "7");
+                loc.textContent = dev.location.length > 15 ? dev.location.substring(0, 13) + ".." : dev.location;
+                svg.appendChild(loc);
+                
+                const portY = y + h;
+                for (let p = 0; p < dev.portCount; p++) {
+                    const portX = x + 16 + p * portSpacing;
+                    const circle = document.createElementNS(svgNS, "circle");
+                    circle.setAttribute("cx", portX); circle.setAttribute("cy", portY);
+                    circle.setAttribute("r", "4.5"); circle.setAttribute("fill", "#1e40af");
+                    circle.setAttribute("stroke", "#fff"); circle.setAttribute("stroke-width", "1.5");
+                    svg.appendChild(circle);
+                    
+                    const pnum = document.createElementNS(svgNS, "text");
+                    pnum.setAttribute("x", portX); pnum.setAttribute("y", portY + 13);
+                    pnum.setAttribute("text-anchor", "middle"); pnum.setAttribute("fill", "#475569");
+                    pnum.setAttribute("font-size", "6.5");
+                    pnum.textContent = p + 1;
+                    svg.appendChild(pnum);
+                }
+            });
+            
+            const existingHorizontals = [];
+            
+            connections.forEach((conn) => {
+                const fromPos = positions[conn.fromId];
+                const toPos = positions[conn.toId];
+                if (!fromPos || !toPos) return;
+                
+                const fromX = fromPos.x + 16 + (conn.fromPort - 1) * portSpacing;
+                const toX = toPos.x + 16 + (conn.toPort - 1) * portSpacing;
+                
+                const bestTrackIndex = findBestTrack(fromX, toX, existingHorizontals, trackYs);
+                conn.track = bestTrackIndex;
+                conn.chosenY = trackYs[bestTrackIndex];
+                
+                existingHorizontals.push({
+                    y: conn.chosenY,
+                    minX: Math.min(fromX, toX),
+                    maxX: Math.max(fromX, toX)
+                });
+            });
+            
+            connections.forEach((conn) => {
+                const fromPos = positions[conn.fromId];
+                const toPos = positions[conn.toId];
+                if (!fromPos || !toPos || conn.track === null) return;
+                
+                const fromX = fromPos.x + 16 + (conn.fromPort - 1) * portSpacing;
+                const toX = toPos.x + 16 + (conn.toPort - 1) * portSpacing;
+                const fromY = fromPos.y + fromPos.h;
+                const toY = toPos.y + toPos.h;
+                const trackY = conn.chosenY;
+                
+                const color = getCableColor(conn.cableType);
+                const d = buildBumpedPath(fromX, fromY, toX, toY, trackY, existingHorizontals);
+                
+                const path = document.createElementNS(svgNS, "path");
+                path.setAttribute("d", d);
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", color);
+                path.setAttribute("stroke-width", "3.5");
+                path.setAttribute("stroke-linecap", "round");
+                path.setAttribute("stroke-linejoin", "round");
+                svg.appendChild(path);
+                
+                if (conn.label) {
+                    const label = document.createElementNS(svgNS, "text");
+                    label.setAttribute("x", (fromX + toX) / 2);
+                    label.setAttribute("y", trackY - 6);
+                    label.setAttribute("text-anchor", "middle");
+                    label.setAttribute("fill", "#475569");
+                    label.setAttribute("font-size", "8");
+                    label.setAttribute("font-weight", "600");
+                    label.textContent = conn.label;
+                    svg.appendChild(label);
+                }
+            });
+            
+            const legendY = 590;
+            const legendItems = [
+                {name: "NMEA2000", color: "#111827"},
+                {name: "Network", color: "#0066cc"},
+                {name: "Ethernet", color: "#00aa00"},
+                {name: "Power 12V", color: "#ef4444"},
+                {name: "Transducer", color: "#f97316"}
+            ];
+            
+            legendItems.forEach((item, i) => {
+                const x = 80 + i * 195;
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", x); line.setAttribute("y1", legendY);
+                line.setAttribute("x2", x + 28); line.setAttribute("y2", legendY);
+                line.setAttribute("stroke", item.color); line.setAttribute("stroke-width", "4");
+                svg.appendChild(line);
+                
+                const txt = document.createElementNS(svgNS, "text");
+                txt.setAttribute("x", x + 35); txt.setAttribute("y", legendY + 4);
+                txt.setAttribute("fill", "#475569"); txt.setAttribute("font-size", "9.5");
+                txt.textContent = item.name;
+                svg.appendChild(txt);
+            });
+            
+            preview.appendChild(svg);
+            window.currentSVG = svg.outerHTML;
+        }
+        
+        function getCableColor(type) {
+            const map = { 'NMEA2000': '#111827', 'Network': '#0066cc', 'Ethernet': '#00aa00', 'Power12V': '#ef4444', 'Transducer': '#f97316' };
+            return map[type] || '#64748b';
+        }
+        
+        function downloadSVG() {
+            if (!window.currentSVG) return alert("Generate the diagram first!");
+            const blob = new Blob([window.currentSVG], {type: "image/svg+xml"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "wirechex_v2.2_variable_ports.svg";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function resetAll() {
+            if (confirm("Reset everything?")) {
+                devices = []; connections = []; usedPorts.clear();
+                document.getElementById('devices-list').innerHTML = '';
+                document.getElementById('connections-list').innerHTML = '';
+                document.getElementById('diagram-preview').innerHTML = `<div class="text-center p-8 text-slate-400"><div class="text-7xl mb-4 opacity-30">🛥️</div><p class="text-sm">Add devices with variable ports<br>then click <span class="font-semibold text-blue-400">Regenerate</span></p></div>`;
+                updateCounts();
+                updateDeviceSelects();
+            }
+        }
+        
+        window.loadDemo = function() {
+            devices = []; connections = []; usedPorts.clear();
+            
+            const sample = [
+                {name: "8616", location: "*Behind Helm", portCount: 4},
+                {name: "GMR18", location: "*Above Helm", portCount: 4},
+                {name: "8612", location: "*Behind Helm", portCount: 4},
+                {name: "GHC", location: "*Helm", portCount: 2},
+                {name: "943", location: "*Flybridge", portCount: 3},
+                {name: "743", location: "*Cockpit", portCount: 2}
+            ];
+            
+            sample.forEach(d => {
+                const id = Date.now() + Math.random();
+                devices.push({id, ...d});
+                usedPorts.set(id, new Set());
+            });
+            
+            renderDevices();
+            updateDeviceSelects();
+            updateCounts();
+            
+            setTimeout(() => {
+                const d8616 = devices[0], dGMR = devices[1], d8612 = devices[2];
+                const dGHC = devices[3], d943 = devices[4], d743 = devices[5];
+                
+                const demoConns = [
+                    {from: d8616, fp: 1, to: dGMR, tp: 1, type: "NMEA2000", label: "Backbone"},
+                    {from: d8616, fp: 2, to: dGMR, tp: 2, type: "Network", label: "Radar"},
+                    {from: d8616, fp: 3, to: d8612, tp: 1, type: "Ethernet", label: "Chart"},
+                    {from: dGMR, fp: 3, to: d8612, tp: 2, type: "Transducer", label: "Sounder"},
+                    {from: d8612, fp: 3, to: d943, tp: 1, type: "Network", label: "Upper"},
+                    {from: dGHC, fp: 1, to: d943, tp: 2, type: "NMEA2000", label: "Helm"},
+                    {from: d8616, fp: 4, to: d743, tp: 1, type: "Power12V", label: "Power"},
+                ];
+                
+                demoConns.forEach(c => {
+                    connections.push({
+                        id: Date.now() + Math.random(),
+                        fromId: c.from.id, fromPort: c.fp,
+                        toId: c.to.id, toPort: c.tp,
+                        fromName: c.from.name, toName: c.to.name,
+                        cableType: c.type, label: c.label,
+                        track: null, bumps: []
+                    });
+                    usedPorts.get(c.from.id).add(c.fp);
+                    usedPorts.get(c.to.id).add(c.tp);
+                });
+                
+                renderConnections();
+                updateCounts();
+                updateDeviceSelects();
+                generateDiagram();
+            }, 120);
+        };
+        
+        function init() {
+            updateCounts();
+            console.log('%c[WireChex v2.2] Variable ports + full bump engine loaded', 'color:#10b981');
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
